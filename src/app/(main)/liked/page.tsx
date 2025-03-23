@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import axios from "axios";
+import api from "@/lib/axios";
 
 import MediaItem from "@/components/media-item";
 import LikeButton from "@/components/like-button";
@@ -25,7 +25,7 @@ export default function Liked() {
     const fetchLikedSongs = async () => {
       try {
         setIsLoading(true);
-        const { data } = await axios.get("/api/liked");
+        const { data } = await api.get("/liked");
         setLikedSongs(data);
       } catch (error) {
         console.error("Error fetching liked songs:", error);

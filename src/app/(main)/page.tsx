@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
-import axios from "axios";
+import api from "@/lib/axios";
 
 import SongCard from "@/components/song-card";
 import PlaylistCard from "@/components/playlist-card";
@@ -21,15 +21,15 @@ export default function Home() {
         setIsLoading(true);
 
         // Fetch recent songs
-        const songsResponse = await axios.get("/api/songs/recent");
+        const songsResponse = await api.get("/songs/recent");
         setRecentSongs(songsResponse.data);
 
         // Fetch recommended playlists
-        const playlistsResponse = await axios.get("/api/playlists/recommended");
+        const playlistsResponse = await api.get("/playlists/recommended");
         setRecommendedPlaylists(playlistsResponse.data);
 
         // Fetch top artists
-        const artistsResponse = await axios.get("/api/artists/top");
+        const artistsResponse = await api.get("/artists/top");
         setTopArtists(artistsResponse.data);
       } catch (error) {
         console.error("Error fetching home data:", error);

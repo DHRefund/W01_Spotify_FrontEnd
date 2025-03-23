@@ -5,7 +5,7 @@ import { AiOutlinePlus } from "react-icons/ai";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
-import axios from "axios";
+import api from "@/lib/axios";
 import toast from "react-hot-toast";
 import MediaItem from "./media-item";
 import useUploadModal from "@/hooks/useUploadModal";
@@ -19,9 +19,8 @@ const Library = () => {
   useEffect(() => {
     if (session?.user) {
       // Fetch user playlists
-      // This is a placeholder - you'll need to implement the API endpoint
-      axios
-        .get("/api/playlists")
+      api
+        .get("/playlists")
         .then((res) => {
           setPlaylists(res.data);
         })

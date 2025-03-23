@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
-import axios from "axios";
+import api from "@/lib/axios";
 
 import Input from "@/components/ui/input";
 import MediaItem from "@/components/media-item";
@@ -31,7 +31,7 @@ export default function Search() {
     const fetchSearchResults = async () => {
       setIsLoading(true);
       try {
-        const response = await axios.get(`/api/search?query=${searchQuery}`);
+        const response = await api.get(`/search?query=${searchQuery}`);
         setSearchResults(response.data);
       } catch (error) {
         console.error("Error searching:", error);

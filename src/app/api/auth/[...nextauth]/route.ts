@@ -4,7 +4,7 @@ import FacebookProvider from "next-auth/providers/facebook";
 import CredentialsProvider from "next-auth/providers/credentials";
 import axios from "axios";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 const handler = NextAuth({
   providers: [

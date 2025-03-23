@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import axios from "axios";
+import api from "@/lib/axios";
 import Image from "next/image";
 
 import MediaItem from "@/components/media-item";
@@ -26,7 +26,7 @@ export default function PlaylistPage({ params }: { params: { id: string } }) {
     const fetchPlaylist = async () => {
       try {
         setIsLoading(true);
-        const { data } = await axios.get(`/api/playlists/${params.id}`);
+        const { data } = await api.get(`/playlists/${params.id}`);
         setPlaylist(data);
       } catch (error) {
         console.error("Error fetching playlist:", error);

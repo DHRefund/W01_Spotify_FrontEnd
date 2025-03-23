@@ -7,7 +7,7 @@ import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import axios from "axios";
+import api from "@/lib/axios";
 
 const registerSchema = z
   .object({
@@ -43,7 +43,7 @@ export default function RegisterPage() {
     setError(null);
 
     try {
-      await axios.post(`${API_URL}/auth/register`, {
+      await api.post(`/auth/register`, {
         name: data.name,
         email: data.email,
         password: data.password,

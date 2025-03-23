@@ -5,7 +5,7 @@ import { AiOutlineHeart, AiFillHeart } from "react-icons/ai";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { toast } from "react-hot-toast";
-import axios from "axios";
+import api from "@/lib/axios";
 
 interface LikeButtonProps {
   songId: string;
@@ -24,7 +24,7 @@ const LikeButton: React.FC<LikeButtonProps> = ({ songId }) => {
     // Check if the song is liked
     const fetchData = async () => {
       try {
-        const { data } = await axios.get(`/api/liked?songId=${songId}`);
+        const { data } = await api.get(`/liked?songId=${songId}`);
         setIsLiked(data.isLiked);
       } catch (error) {
         console.error(error);
@@ -43,9 +43,9 @@ const LikeButton: React.FC<LikeButtonProps> = ({ songId }) => {
 
     try {
       if (isLiked) {
-        await axios.delete(`/api/liked?songId=${songId}`);
+        await api.delete(`/liked?songId=${songId}`);
       } else {
-        await axios.post("/api/liked", { songId });
+        await api.post("/liked", { songId });
       }
 
       setIsLiked(!isLiked);
