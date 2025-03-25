@@ -8,7 +8,7 @@ import { twMerge } from "tailwind-merge";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { RiPlayListFill } from "react-icons/ri";
-import { MdFavorite } from "react-icons/md";
+import { MdFavorite, MdRecommend } from "react-icons/md";
 
 import Box from "./ui/box";
 import SidebarItem from "./sidebar-item";
@@ -35,6 +35,12 @@ const Sidebar: React.FC<SidebarProps> = ({ children }) => {
         label: "Tìm kiếm",
         active: pathname === "/search",
         href: "/search",
+      },
+      {
+        icon: MdRecommend,
+        label: "Đề xuất",
+        active: pathname === "/recommendations",
+        href: "/recommendations",
       },
       {
         icon: MdFavorite,

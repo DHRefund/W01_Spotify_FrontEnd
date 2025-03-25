@@ -6,6 +6,7 @@ import { HiSpeakerWave, HiSpeakerXMark } from "react-icons/hi2";
 import { AiFillStepBackward, AiFillStepForward } from "react-icons/ai";
 import useSound from "use-sound";
 import { useSession } from "next-auth/react";
+import api from "@/lib/axios";
 
 import MediaItem from "./media-item";
 import LikeButton from "./like-button";
@@ -94,6 +95,14 @@ const Player = () => {
     artist: { name: "Artist Name" },
     imageUrl: "/images/music-placeholder.png",
   };
+
+  useEffect(() => {
+    if (player.activeId && session?.user) {
+      api.post("/play-history", { songId: player.activeId }).catch((error) => {
+        console.error("Failed to record play history", error);
+      });
+    }
+  }, [player.activeId, session?.user]);
 
   if (!player.activeId) {
     return null;

@@ -8,13 +8,13 @@ import { useState, useEffect } from "react";
 import api from "@/lib/axios";
 import toast from "react-hot-toast";
 import MediaItem from "./media-item";
-import useUploadModal from "@/hooks/useUploadModal";
+import useCreatePlaylistModal from "@/hooks/useCreatePlaylistModal";
 
 const Library = () => {
   const router = useRouter();
   const { data: session } = useSession();
   const [playlists, setPlaylists] = useState([]);
-  const uploadModal = useUploadModal();
+  const createPlaylistModal = useCreatePlaylistModal();
 
   useEffect(() => {
     if (session?.user) {
@@ -37,7 +37,7 @@ const Library = () => {
     }
 
     // Open create playlist modal
-    uploadModal.onOpen();
+    createPlaylistModal.onOpen();
   };
 
   return (
