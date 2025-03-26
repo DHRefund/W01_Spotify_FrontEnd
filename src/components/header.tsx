@@ -33,19 +33,6 @@ const Header: React.FC<HeaderProps> = ({ children, className }) => {
     }
   };
 
-  const handleUpload = () => {
-    console.log("Upload button clicked");
-    console.log("Session:", session?.user);
-
-    if (!session?.user) {
-      console.log("No user session, opening auth modal");
-      return authModal.onOpen();
-    }
-
-    console.log("Opening upload modal");
-    uploadModal.onOpen();
-  };
-
   return (
     <div className={twMerge(`h-fit bg-gradient-to-b from-emerald-800 p-6`, className)}>
       <div className="w-full mb-4 flex items-center justify-between">
@@ -80,16 +67,12 @@ const Header: React.FC<HeaderProps> = ({ children, className }) => {
         <div className="flex justify-between items-center gap-x-4">
           {session?.user ? (
             <>
-              <Button onClick={handleUpload} className="bg-white px-6 py-2 cursor-pointer">
-                <MdOutlineFileUpload size={20} className="mr-2" />
-                Tải lên
-              </Button>
               <div
                 onClick={() => router.push("/account")}
                 className="flex items-center gap-x-4 cursor-pointer hover:opacity-75 transition"
               >
                 <div className="w-10 h-10 rounded-full bg-neutral-500 flex items-center justify-center overflow-hidden">
-                  {session.user.image ? <img src={session.user.image} alt="Profile" /> : <FaUserAlt />}
+                  {session.user.imageUrl ? <img src={session.user.imageUrl} alt="Profile" /> : <FaUserAlt />}
                 </div>
                 <p className="text-white font-medium">{session.user.name}</p>
               </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { signIn } from "next-auth/react";
+import { signIn, getSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
@@ -23,6 +23,7 @@ export default function LoginPage() {
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors },
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -38,14 +39,24 @@ export default function LoginPage() {
         password: data.password,
         redirect: false,
       });
+      console.log("SignIn result:", result);
+      reset();
+
+      const session = await getSession();
+      console.log("Session after login:", session);
 
       if (result?.error) {
         setError("Email hoặc mật khẩu không đúng");
       } else {
-        router.push("/");
+        if (session?.user?.role === "ADMIN") {
+          router.push("/admin");
+        } else {
+          router.push("/");
+        }
         router.refresh();
       }
     } catch (error) {
+      console.error("Login error:", error);
       setError("Đã xảy ra lỗi khi đăng nhập");
     } finally {
       setIsLoading(false);

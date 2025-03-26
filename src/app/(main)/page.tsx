@@ -49,11 +49,11 @@ export default function Home() {
     { id: "4", title: "Song 4", artist: { name: "Artist 4" }, imageUrl: "/images/music-placeholder.png" },
   ];
 
-  const placeholderPlaylists = [
-    { id: "1", title: "Playlist 1", imageUrl: "/images/playlist-placeholder.png" },
-    { id: "2", title: "Playlist 2", imageUrl: "/images/playlist-placeholder.png" },
-    { id: "3", title: "Playlist 3", imageUrl: "/images/playlist-placeholder.png" },
-  ];
+  // const placeholderPlaylists = [
+  //   { id: "1", title: "Playlist 1", imageUrl: "/images/playlist-placeholder.png" },
+  //   { id: "2", title: "Playlist 2", imageUrl: "/images/playlist-placeholder.png" },
+  //   { id: "3", title: "Playlist 3", imageUrl: "/images/playlist-placeholder.png" },
+  // ];
 
   const placeholderArtists = [
     { id: "1", name: "Artist 1", imageUrl: "/images/artist-placeholder.png" },
@@ -62,7 +62,7 @@ export default function Home() {
   ];
 
   return (
-    <div className="bg-neutral-900 rounded-lg h-full w-full overflow-hidden overflow-y-auto">
+    <div className="bg-neutral-900 rounded-lg h-full w-full overflow-hidden overflow-y-auto mb-10">
       <div className="mb-2">
         <h1 className="text-white text-3xl font-semibold">Chào buổi tối</h1>
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3 mt-4">
@@ -75,9 +75,11 @@ export default function Home() {
       <div className="mt-6 mb-2">
         <h2 className="text-white text-2xl font-semibold">Playlist dành cho bạn</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 mt-4">
-          {(recommendedPlaylists.length > 0 ? recommendedPlaylists : placeholderPlaylists).map((playlist) => (
-            <PlaylistCard key={playlist.id} data={playlist} />
-          ))}
+          {recommendedPlaylists.length > 0 ? (
+            recommendedPlaylists.map((playlist) => <PlaylistCard key={playlist.id} data={playlist} />)
+          ) : (
+            <div className="text-neutral-400">Hãy tạo playlist cho riêng bạn</div>
+          )}
         </div>
       </div>
 
