@@ -31,7 +31,6 @@ const Library = () => {
   }, [session]);
 
   const onClick = () => {
-    // Handle creating a new playlist
     if (!session?.user) {
       return router.push("/login");
     }

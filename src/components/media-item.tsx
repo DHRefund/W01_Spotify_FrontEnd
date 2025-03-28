@@ -24,7 +24,7 @@ const MediaItem: React.FC<MediaItemProps> = ({ data, onClick }) => {
     }
 
     // Default behavior
-    router.push(`/songs/${data.id}`);
+    router.push(`/song/${data.id}`);
   };
 
   return (
@@ -54,7 +54,7 @@ const MediaItem: React.FC<MediaItemProps> = ({ data, onClick }) => {
       </div>
       <div className="flex flex-col gap-y-1 overflow-hidden">
         <p className="text-white truncate">{data.title}</p>
-        <p className="text-neutral-400 text-sm truncate">{data.artist?.name}</p>
+        <p className="text-neutral-400 text-sm truncate">{data.artist?.name || "Unknown Artist"}</p>
       </div>
     </div>
   );

@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AiOutlineHeart, AiFillHeart } from "react-icons/ai";
+import { AiFillHeart, AiOutlineHeart } from "react-icons/ai";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { toast } from "react-hot-toast";
 import api from "@/lib/axios";
+import useAuthModal from "@/hooks/useAuthModal";
 
 interface LikeButtonProps {
   songId: string;
@@ -14,6 +15,8 @@ interface LikeButtonProps {
 const LikeButton: React.FC<LikeButtonProps> = ({ songId }) => {
   const router = useRouter();
   const { data: session } = useSession();
+  const authModal = useAuthModal();
+
   const [isLiked, setIsLiked] = useState(false);
 
   useEffect(() => {
@@ -21,49 +24,43 @@ const LikeButton: React.FC<LikeButtonProps> = ({ songId }) => {
       return;
     }
 
-    // Check if the song is liked
-    const fetchData = async () => {
+    const checkIfLiked = async () => {
       try {
-        const { data } = await api.get(`/liked?songId=${songId}`);
-        setIsLiked(data.isLiked);
+        console.log("Checking if song is liked:", songId);
+        const response = await api.get(`/songs/${songId}/liked`);
+        console.log("Like status:", response.data);
+        setIsLiked(response.data.liked);
       } catch (error) {
-        console.error(error);
+        console.error("Error checking if song is liked:", error);
       }
     };
 
-    fetchData();
+    checkIfLiked();
   }, [songId, session?.user]);
-
-  const Icon = isLiked ? AiFillHeart : AiOutlineHeart;
 
   const handleLike = async () => {
     if (!session?.user) {
-      return router.push("/login");
+      return authModal.onOpen();
     }
 
     try {
-      if (isLiked) {
-        await api.delete(`/liked?songId=${songId}`);
-      } else {
-        await api.post("/liked", { songId });
-      }
+      console.log("Toggling like for song:", songId);
+      const response = await api.post(`/songs/${songId}/like`);
+      console.log("Toggle like response:", response.data);
+      setIsLiked(response.data.liked);
 
-      setIsLiked(!isLiked);
       router.refresh();
       toast.success(isLiked ? "Đã bỏ thích" : "Đã thích");
     } catch (error) {
+      console.error("Error liking song:", error);
       toast.error("Đã xảy ra lỗi");
     }
   };
 
+  const Icon = isLiked ? AiFillHeart : AiOutlineHeart;
+
   return (
-    <button
-      onClick={handleLike}
-      className="
-        hover:opacity-75 
-        transition
-      "
-    >
+    <button onClick={handleLike} className="hover:opacity-75 transition">
       <Icon color={isLiked ? "#22c55e" : "white"} size={25} />
     </button>
   );

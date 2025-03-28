@@ -6,7 +6,7 @@ import { useSession } from "next-auth/react";
 import api from "@/lib/axios";
 import Image from "next/image";
 import { toast } from "react-hot-toast";
-import { FaEdit, FaTrash, FaPlay } from "react-icons/fa";
+import { FaEdit, FaTrash, FaPlay, FaPlus } from "react-icons/fa";
 
 import MediaItem from "@/components/media-item";
 import LikeButton from "@/components/like-button";
@@ -14,12 +14,14 @@ import usePlayer from "@/hooks/usePlayer";
 import Button from "@/components/ui/button";
 import useEditPlaylistModal from "@/hooks/useEditPlaylistModal";
 import ShareButton from "@/components/share-button";
+import useAddSongModal from "@/hooks/useAddSongToPlaylistModal";
 
 export default function PlaylistPage({ params }: { params: { id: string } }) {
   const router = useRouter();
   const { data: session } = useSession();
   const player = usePlayer();
   const editPlaylistModal = useEditPlaylistModal();
+  const addSongModal = useAddSongModal();
 
   const [playlist, setPlaylist] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -94,6 +96,10 @@ export default function PlaylistPage({ params }: { params: { id: string } }) {
     } catch (error) {
       toast.error("Không thể xóa bài hát");
     }
+  };
+
+  const handleAddSong = () => {
+    addSongModal.onOpen(params.id);
   };
 
   // Placeholder data for development
@@ -181,6 +187,12 @@ export default function PlaylistPage({ params }: { params: { id: string } }) {
             <FaPlay size={24} />
           </button>
           <ShareButton type="playlist" id={playlistData.id} title={playlistData.title} />
+          {isOwner && (
+            <Button onClick={handleAddSong} className="bg-green-500 text-black flex items-center gap-x-2">
+              <FaPlus />
+              Thêm bài hát
+            </Button>
+          )}
         </div>
       </div>
     </div>

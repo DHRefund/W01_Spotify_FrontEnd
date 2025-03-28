@@ -13,16 +13,26 @@ interface SongCardProps {
       name: string;
     };
     imageUrl: string;
+    url?: string;
   };
 }
 
 const SongCard: React.FC<SongCardProps> = ({ data }) => {
-  const router = useRouter();
   const player = usePlayer();
+  const router = useRouter();
 
   const handleClick = () => {
+    if (!data.url) {
+      console.log("Song clicked:", data);
+      router.push(`/song/${data.id}`);
+      return;
+    }
+
+    console.log("xem", player);
     player.setId(data.id);
     player.setIds([data.id]);
+    console.log("Playing song:", data);
+    console.log("player", player);
   };
 
   return (
@@ -59,7 +69,7 @@ const SongCard: React.FC<SongCardProps> = ({ data }) => {
       </div>
       <div className="flex flex-col items-start w-full pt-4 gap-y-1">
         <p className="font-semibold truncate w-full text-white">{data.title}</p>
-        <p className="text-neutral-400 text-sm pb-4 w-full truncate">{data.artist.name}</p>
+        <p className="text-neutral-400 text-sm pb-4 w-full truncate">{data.artist?.name || "Unknown Artist"}</p>
       </div>
       <div
         className="
@@ -70,21 +80,17 @@ const SongCard: React.FC<SongCardProps> = ({ data }) => {
       >
         <div
           className="
-            opacity-0 
-            transition 
-            group-hover:opacity-100 
-            drop-shadow-md 
-            translate
-            translate-y-1/4
-            group-hover:translate-y-0
-            h-10 
-            w-10 
             flex 
             items-center 
             justify-center 
             rounded-full 
             bg-green-500 
-            p-1
+            p-4 
+            drop-shadow-md 
+            opacity-0 
+            group-hover:opacity-100 
+            hover:scale-110 
+            transition
           "
         >
           <FaPlay className="text-black" />

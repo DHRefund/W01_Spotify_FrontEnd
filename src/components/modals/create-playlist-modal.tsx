@@ -1,42 +1,26 @@
 "use client";
 
 import { useState } from "react";
-import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { FieldValues, SubmitHandler, useForm } from "react-hook-form";
 
-import Modal from "./modal";
-import Input from "../ui/input";
-import Button from "../ui/button";
+import Modal from "@/components/modals/modal";
+import Input from "@/components/ui/input";
+import Button from "@/components/ui/button";
 import api from "@/lib/axios";
 import useCreatePlaylistModal from "@/hooks/useCreatePlaylistModal";
 
-const createPlaylistSchema = z.object({
-  title: z.string().min(1, "Tên playlist không được để trống"),
-  description: z.string().optional(),
-});
-
-type CreatePlaylistValues = z.infer<typeof createPlaylistSchema>;
-
 const CreatePlaylistModal = () => {
-  const createPlaylistModal = useCreatePlaylistModal();
-  const router = useRouter();
-  const { data: session } = useSession();
   const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+  const createPlaylistModal = useCreatePlaylistModal();
 
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors },
-  } = useForm<CreatePlaylistValues>({
-    resolver: zodResolver(createPlaylistSchema),
+  const { register, handleSubmit, reset } = useForm<FieldValues>({
     defaultValues: {
       title: "",
       description: "",
+      image: null,
     },
   });
 
@@ -47,26 +31,27 @@ const CreatePlaylistModal = () => {
     }
   };
 
-  const onSubmit = async (values: CreatePlaylistValues) => {
+  const onSubmit: SubmitHandler<FieldValues> = async (values) => {
     try {
       setIsLoading(true);
 
-      if (!session?.user) {
-        toast.error("Bạn cần đăng nhập để tạo playlist");
-        return;
-      }
+      const formData = new FormData();
 
-      const response = await api.post("/playlists", values);
+      formData.append("title", values.title);
+      if (values.description) formData.append("description", values.description);
+      if (values.image?.[0]) formData.append("image", values.image[0]);
 
-      toast.success("Đã tạo playlist thành công!");
+      // Gửi request tạo playlist
+      const response = await api.post("/playlists", formData);
+
+      toast.success("Tạo playlist thành công!");
       reset();
       createPlaylistModal.onClose();
       router.refresh();
-
-      // Chuyển hướng đến trang playlist mới tạo
       router.push(`/playlist/${response.data.id}`);
     } catch (error) {
-      toast.error("Đã xảy ra lỗi khi tạo playlist");
+      console.error("Lỗi khi tạo playlist:", error);
+      toast.error("Có lỗi xảy ra khi tạo playlist");
     } finally {
       setIsLoading(false);
     }
@@ -74,25 +59,25 @@ const CreatePlaylistModal = () => {
 
   return (
     <Modal
-      title="Tạo Playlist mới"
-      description="Thêm một playlist mới vào thư viện của bạn"
+      title="Tạo playlist mới"
+      description="Thêm thông tin cho playlist của bạn"
       isOpen={createPlaylistModal.isOpen}
       onChange={onChange}
     >
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-y-4">
+        <Input id="title" disabled={isLoading} {...register("title", { required: true })} placeholder="Tên playlist" />
         <Input
-          id="title"
+          id="description"
           disabled={isLoading}
-          {...register("title")}
-          placeholder="Tên playlist"
-          className={errors.title ? "border-red-500" : ""}
+          {...register("description")}
+          placeholder="Mô tả (không bắt buộc)"
         />
-        {errors.title && <p className="text-red-500 text-sm">{errors.title.message}</p>}
-
-        <Input id="description" disabled={isLoading} {...register("description")} placeholder="Mô tả (tùy chọn)" />
-
+        <div>
+          <div className="pb-1">Chọn ảnh (không bắt buộc)</div>
+          <Input id="image" type="file" disabled={isLoading} accept="image/*" {...register("image")} />
+        </div>
         <Button disabled={isLoading} type="submit">
-          Tạo
+          Tạo playlist
         </Button>
       </form>
     </Modal>
