@@ -8,13 +8,13 @@ import { BiRepeat } from "react-icons/bi";
 import { BsShuffle } from "react-icons/bs";
 import { Howl } from "howler";
 import { useSession } from "next-auth/react";
-import api from "@/lib/axios";
 import { toast } from "react-hot-toast";
 
 import MediaItem from "./media-item";
 import LikeButton from "./like-button";
 import Slider from "./slider";
 import usePlayer from "@/hooks/usePlayer";
+import { useSong, useRecordPlay } from "@/hooks/useApi";
 
 interface Song {
   id: string;
@@ -29,9 +29,7 @@ interface Song {
 const Player = () => {
   const player = usePlayer();
   const { data: session } = useSession();
-  const [song, setSong] = useState<Song | null>(null);
   const [volume, setVolume] = useState(1);
-  const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const soundRef = useRef<Howl | null>(null);
   const [seek, setSeek] = useState(0);
@@ -40,7 +38,11 @@ const Player = () => {
   const [shuffle, setShuffle] = useState(false);
   const progressRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
-  const Icon = isPlaying ? BsPauseFill : BsPlayFill;
+  // Sử dụng React Query
+  const { data: song, isLoading: songLoading } = useSong(player.activeId);
+  const { mutate: recordPlay } = useRecordPlay();
+
+  const Icon = player.isPlaying ? BsPauseFill : BsPlayFill;
   const VolumeIcon = volume === 0 ? HiSpeakerXMark : HiSpeakerWave;
 
   // Format thời gian từ giây sang mm:ss
@@ -80,7 +82,7 @@ const Player = () => {
         player.setId(nextSong);
       } else {
         // Nếu là bài cuối và không repeat thì dừng
-        setIsPlaying(false);
+        player.setIsPlaying(false);
       }
     }
   };
@@ -97,7 +99,7 @@ const Player = () => {
         html5: true,
         volume: volume,
         onplay: () => {
-          setIsPlaying(true);
+          player.setIsPlaying(true);
           toast.success("Đã bắt đầu phát âm thanh");
           updateProgress();
         },
@@ -108,13 +110,13 @@ const Player = () => {
           soundRef.current?.play();
         },
         onend: () => {
-          setIsPlaying(false);
+          player.setIsPlaying(false);
           clearInterval(progressRef.current);
           handleSongEnd();
         },
         onpause: () => {
           console.log("Sound paused");
-          setIsPlaying(false);
+          player.setIsPlaying(false);
           toast.success("Đã tạm dừng phát âm thanh");
         },
         onloaderror: () => {
@@ -136,7 +138,7 @@ const Player = () => {
         clearInterval(progressRef.current);
       }
     };
-  }, [song]);
+  }, [song, volume]);
 
   // Cập nhật progress
   const updateProgress = () => {
@@ -148,13 +150,27 @@ const Player = () => {
     }, 1000);
   };
 
-  // Xử lý khi người dùng thay đổi progress
-  const onSeek = (value: number) => {
+  // Ghi lại lịch sử khi bắt đầu phát
+  useEffect(() => {
+    if (player.isPlaying && session?.user && song?.id) {
+      recordPlay(song.id);
+    }
+  }, [player.isPlaying, session?.user, song?.id, recordPlay]);
+
+  // Xử lý volume
+  useEffect(() => {
     if (soundRef.current) {
-      clearInterval(progressRef.current);
-      soundRef.current.seek(value);
-      setSeek(value);
-      updateProgress();
+      soundRef.current.volume(volume);
+    }
+  }, [volume]);
+
+  const handlePlay = () => {
+    if (!song || !soundRef.current) return;
+
+    if (player.isPlaying) {
+      soundRef.current.pause();
+    } else {
+      soundRef.current.play();
     }
   };
 
@@ -191,57 +207,16 @@ const Player = () => {
     setShuffle((current) => !current);
   };
 
-  // Tải bài hát khi activeId thay đổi
-  useEffect(() => {
-    if (!player.activeId) return;
-
-    setIsLoading(true);
-    console.log("Loading song:", player.activeId);
-
-    api
-      .get(`/songs/${player.activeId}`)
-      .then((response) => {
-        console.log("Song data:", response.data);
-        setSong(response.data);
-      })
-      .catch((error) => {
-        console.error("Error loading song:", error);
-        toast.error("Không thể tải bài hát");
-      })
-      .finally(() => {
-        setIsLoading(false);
-      });
-  }, [player.activeId]);
-
-  // Ghi lại lịch sử khi bắt đầu phát
-  useEffect(() => {
-    if (isPlaying && session?.user && song?.id) {
-      api.post(`/songs/${song.id}/play`).catch((error) => console.error("Failed to record play:", error));
-    }
-  }, [isPlaying, session?.user, song?.id]);
-
-  // Thêm vào đầu component
-  console.log("Player rendered with activeId:", player.activeId);
-  console.log("Current song:", song);
-
-  // Xử lý volume
-  useEffect(() => {
+  // Xử lý khi người dùng thay đổi progress
+  const onSeek = (value: number) => {
     if (soundRef.current) {
-      soundRef.current.volume(volume);
-    }
-  }, [volume]);
-
-  const handlePlay = () => {
-    if (!song || !soundRef.current) return;
-
-    if (isPlaying) {
-      soundRef.current.pause();
-    } else {
-      soundRef.current.play();
+      clearInterval(progressRef.current);
+      soundRef.current.seek(value);
+      setSeek(value);
+      updateProgress();
     }
   };
 
-  // Cập nhật onPlayNext để xử lý repeat
   const onPlayNext = () => {
     if (player.ids.length === 0) return;
 
@@ -294,6 +269,7 @@ const Player = () => {
     }
   };
 
+  // Trả về UI component với dữ liệu từ React Query
   if (!song) {
     return null;
   }
@@ -304,7 +280,7 @@ const Player = () => {
         <div className="grid h-full grid-cols-3 items-center">
           {/* Left section - Song info */}
           <div className="flex items-center gap-x-4 w-full max-w-[400px]">
-            {isLoading ? (
+            {songLoading ? (
               <div className="flex items-center gap-x-3">
                 <div className="h-14 w-14 rounded bg-neutral-800 animate-pulse" />
                 <div className="flex flex-col">

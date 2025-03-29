@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import api from "@/lib/axios";
 import Image from "next/image";
 import { toast } from "react-hot-toast";
 import { FaEdit, FaTrash, FaPlay, FaPlus } from "react-icons/fa";
@@ -15,6 +14,9 @@ import Button from "@/components/ui/button";
 import useEditPlaylistModal from "@/hooks/useEditPlaylistModal";
 import ShareButton from "@/components/share-button";
 import useAddSongModal from "@/hooks/useAddSongToPlaylistModal";
+import LoadingSpinner from "@/components/loading-spinner";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import api from "@/lib/axios";
 
 export default function PlaylistPage({ params }: { params: { id: string } }) {
   const router = useRouter();
@@ -22,39 +24,51 @@ export default function PlaylistPage({ params }: { params: { id: string } }) {
   const player = usePlayer();
   const editPlaylistModal = useEditPlaylistModal();
   const addSongModal = useAddSongModal();
+  const queryClient = useQueryClient();
 
-  const [playlist, setPlaylist] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isOwner, setIsOwner] = useState(false);
+  // Sử dụng React Query để fetch playlist
+  const {
+    data: playlist,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["playlists", params.id],
+    queryFn: () => api.get(`/playlists/${params.id}`).then((res) => res.data),
+    enabled: !!params.id,
+  });
 
-  useEffect(() => {
-    if (!params.id) {
-      return;
-    }
+  // Xác định nếu người dùng hiện tại là chủ sở hữu
+  const isOwner = playlist && session?.user?.id === playlist.user.id;
 
-    const fetchPlaylist = async () => {
-      try {
-        setIsLoading(true);
-        const { data } = await api.get(`/playlists/${params.id}`);
-        setPlaylist(data);
+  // Mutation để xóa playlist
+  const deletePlaylistMutation = useMutation({
+    mutationFn: () => api.delete(`/playlists/${params.id}`),
+    onSuccess: () => {
+      toast.success("Đã xóa playlist");
+      router.push("/");
+    },
+    onError: () => {
+      toast.error("Không thể xóa playlist");
+    },
+  });
 
-        // Check if current user is the owner
-        if (session?.user?.id === data.user.id) {
-          setIsOwner(true);
-        }
-      } catch (error) {
-        console.error("Error fetching playlist:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchPlaylist();
-  }, [params.id, session?.user?.id]);
+  // Mutation để xóa bài hát khỏi playlist
+  const removeSongMutation = useMutation({
+    mutationFn: (songId: string) => api.delete(`/playlists/${params.id}/songs/${songId}`),
+    onSuccess: () => {
+      toast.success("Đã xóa bài hát khỏi playlist");
+      // Cập nhật lại dữ liệu playlist
+      queryClient.invalidateQueries({ queryKey: ["playlists", params.id] });
+    },
+    onError: () => {
+      toast.error("Không thể xóa bài hát");
+    },
+  });
 
   const onPlay = (id: string) => {
     player.setId(id);
     player.setIds(playlist?.songs?.map((song) => song.id) || []);
+    player.setIsPlaying(true);
   };
 
   const handleEdit = () => {
@@ -72,30 +86,11 @@ export default function PlaylistPage({ params }: { params: { id: string } }) {
     if (!confirm("Bạn có chắc chắn muốn xóa playlist này?")) {
       return;
     }
-
-    try {
-      await api.delete(`/playlists/${params.id}`);
-      toast.success("Đã xóa playlist");
-      router.push("/");
-    } catch (error) {
-      toast.error("Không thể xóa playlist");
-    }
+    deletePlaylistMutation.mutate();
   };
 
   const handleRemoveSong = async (songId: string) => {
-    try {
-      await api.delete(`/playlists/${params.id}/songs/${songId}`);
-
-      // Update the playlist in state
-      setPlaylist({
-        ...playlist,
-        songs: playlist.songs.filter((song) => song.id !== songId),
-      });
-
-      toast.success("Đã xóa bài hát khỏi playlist");
-    } catch (error) {
-      toast.error("Không thể xóa bài hát");
-    }
+    removeSongMutation.mutate(songId);
   };
 
   const handleAddSong = () => {
@@ -119,11 +114,11 @@ export default function PlaylistPage({ params }: { params: { id: string } }) {
   const playlistData = playlist || placeholderPlaylist;
 
   if (isLoading) {
-    return (
-      <div className="flex justify-center items-center h-full">
-        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-t-2 border-green-500"></div>
-      </div>
-    );
+    return <LoadingSpinner />;
+  }
+
+  if (error) {
+    return <div className="text-center text-red-500 p-10">Không thể tải thông tin playlist</div>;
   }
 
   return (

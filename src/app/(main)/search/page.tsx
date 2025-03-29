@@ -3,46 +3,25 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
-import api from "@/lib/axios";
-
 import Input from "@/components/ui/input";
 import MediaItem from "@/components/media-item";
 import PlaylistCard from "@/components/playlist-card";
 import ArtistCard from "@/components/artist-card";
+import { useSearch } from "@/hooks/useApi";
 
 export default function Search() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const query = searchParams.get("query");
+  const urlQuery = searchParams.get("query") || "";
 
-  const [searchResults, setSearchResults] = useState({
-    songs: [],
-    playlists: [],
-    artists: [],
-  });
-  const [isLoading, setIsLoading] = useState(false);
-  const [searchQuery, setSearchQuery] = useState(query || "");
+  const [searchQuery, setSearchQuery] = useState(urlQuery);
+  const { data: searchResults, isLoading } = useSearch(searchQuery);
 
   useEffect(() => {
-    if (!searchQuery) {
-      return;
-    }
-
-    const fetchSearchResults = async () => {
-      setIsLoading(true);
-      try {
-        const response = await api.get(`/search?query=${searchQuery}`);
-        setSearchResults(response.data);
-      } catch (error) {
-        console.error("Error searching:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     const timer = setTimeout(() => {
-      fetchSearchResults();
-      router.push(`/search?query=${searchQuery}`);
+      if (searchQuery) {
+        router.push(`/search?query=${encodeURIComponent(searchQuery)}`);
+      }
     }, 500);
 
     return () => clearTimeout(timer);
@@ -64,10 +43,9 @@ export default function Search() {
     { id: "2", name: "Artist 2", imageUrl: "/images/artist-placeholder.png" },
   ];
 
-  const songs = searchResults.songs.length > 0 ? searchResults.songs : searchQuery ? [] : placeholderSongs;
-  const playlists =
-    searchResults.playlists.length > 0 ? searchResults.playlists : searchQuery ? [] : placeholderPlaylists;
-  const artists = searchResults.artists.length > 0 ? searchResults.artists : searchQuery ? [] : placeholderArtists;
+  const songs = searchResults?.songs || (searchQuery ? [] : placeholderSongs);
+  const playlists = searchResults?.playlists || (searchQuery ? [] : placeholderPlaylists);
+  const artists = searchResults?.artists || (searchQuery ? [] : placeholderArtists);
 
   return (
     <div className="bg-neutral-900 rounded-lg h-full w-full overflow-hidden overflow-y-auto">

@@ -3,48 +3,29 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import api from "@/lib/axios";
 import Image from "next/image";
-
 import LikeButton from "@/components/like-button";
 import ShareButton from "@/components/share-button";
 import usePlayer from "@/hooks/usePlayer";
 import { FaPlay, FaPause } from "react-icons/fa";
 import Lyrics from "@/components/lyrics";
+import { useSong } from "@/hooks/useApi";
 
 export default function SongPage({ params }: { params: { id: string } }) {
   const router = useRouter();
   const { data: session } = useSession();
   const player = usePlayer();
-
-  const [song, setSong] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
 
+  // Sử dụng React Query
+  const { data: song, isLoading, error } = useSong(params.id);
+
   useEffect(() => {
-    if (!params.id) {
-      return;
+    if (song && session?.user?.id === song.userId) {
+      setIsOwner(true);
     }
-
-    const fetchSong = async () => {
-      try {
-        setIsLoading(true);
-        const { data } = await api.get(`/songs/${params.id}`);
-        setSong(data);
-
-        if (session?.user?.id === data.userId) {
-          setIsOwner(true);
-        }
-      } catch (error) {
-        console.error("Error fetching song:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchSong();
-  }, [params.id, session?.user?.id]);
+  }, [song, session?.user?.id]);
 
   useEffect(() => {
     setIsPlaying(player.activeId === params.id && player.isPlaying);
@@ -67,6 +48,7 @@ export default function SongPage({ params }: { params: { id: string } }) {
     artist: { id: "1", name: "Artist Name" },
     imageUrl: "/images/music-placeholder.png",
     url: "",
+    lyrics: "",
   };
 
   const songData = song || placeholderSong;
@@ -77,6 +59,10 @@ export default function SongPage({ params }: { params: { id: string } }) {
         <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-t-2 border-green-500"></div>
       </div>
     );
+  }
+
+  if (error) {
+    return <div className="flex justify-center items-center h-full text-red-500">Có lỗi xảy ra khi tải bài hát</div>;
   }
 
   return (
