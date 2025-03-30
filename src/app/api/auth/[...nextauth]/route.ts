@@ -3,7 +3,6 @@ import GoogleProvider from "next-auth/providers/google";
 import FacebookProvider from "next-auth/providers/facebook";
 import CredentialsProvider from "next-auth/providers/credentials";
 import axios from "axios";
-import api from "@/lib/axios";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
 
@@ -17,7 +16,8 @@ const handler = NextAuth({
       },
       async authorize(credentials) {
         try {
-          const response = await api.post("/auth/login", credentials);
+          const response = await axios.post(`${API_URL}/auth/login`, credentials);
+          // const response = await api.post("/auth/login", credentials);
           console.log("Auth response from backend:", response.data);
           return response.data;
         } catch (error) {
@@ -36,11 +36,9 @@ const handler = NextAuth({
     }),
   ],
   callbacks: {
-    async jwt({ token, user, account, profile }) {
+    async jwt({ token, user }) {
       console.log("JWT Callback - Received user:", user);
       console.log("JWT Callback - Current token:", token);
-      console.log("JWT Callback - Received account:", account);
-      console.log("JWT Callback - Received profile:", profile);
 
       if (user) {
         // Đảm bảo lưu đúng thông tin từ response login
@@ -55,7 +53,6 @@ const handler = NextAuth({
     },
     async session({ session, token }) {
       console.log("Session Callback - Token:", token);
-      console.log("Session Callback - Initial session:", session);
 
       // Cập nhật session với thông tin từ token
       return {
@@ -75,8 +72,12 @@ const handler = NextAuth({
   },
   session: {
     strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 ngày
   },
-  debug: true, // Thêm debug mode để xem logs chi tiết hơn
+  jwt: {
+    maxAge: 60 * 60, // 1 giờ
+  },
+  // debug: true, // Thêm debug mode để xem logs chi tiết hơn
 });
 
 export { handler as GET, handler as POST };

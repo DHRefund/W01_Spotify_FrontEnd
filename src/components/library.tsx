@@ -4,31 +4,25 @@ import { TbPlaylist } from "react-icons/tb";
 import { AiOutlinePlus } from "react-icons/ai";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { useState, useEffect } from "react";
-import api from "@/lib/axios";
-import toast from "react-hot-toast";
+import { useEffect, useState } from "react";
+
 import MediaItem from "./media-item";
 import useCreatePlaylistModal from "@/hooks/useCreatePlaylistModal";
 
+import { useUserPlaylists } from "@/hooks/useApi";
 const Library = () => {
   const router = useRouter();
   const { data: session } = useSession();
   const [playlists, setPlaylists] = useState([]);
   const createPlaylistModal = useCreatePlaylistModal();
 
+  const { data: userPlaylists = [] } = useUserPlaylists();
+
   useEffect(() => {
-    if (session?.user) {
-      // Fetch user playlists
-      api
-        .get("/playlists")
-        .then((res) => {
-          setPlaylists(res.data);
-        })
-        .catch((err) => {
-          console.error("Failed to fetch playlists", err);
-        });
+    if (userPlaylists) {
+      setPlaylists(userPlaylists);
     }
-  }, [session]);
+  }, [userPlaylists]);
 
   const onClick = () => {
     if (!session?.user) {

@@ -16,8 +16,10 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   const router = useRouter();
 
   useEffect(() => {
+    console.log("status", status);
     if (status === "unauthenticated") {
       router.push("/login");
+      console.log("pushing to login");
     }
   }, [status, router]);
 

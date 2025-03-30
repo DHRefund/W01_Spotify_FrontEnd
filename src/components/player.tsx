@@ -28,7 +28,12 @@ interface Song {
 
 const Player = () => {
   const player = usePlayer();
-  const { data: session } = useSession();
+  const { data: session } = useSession({
+    required: false,
+    refetchInterval: 0,
+    refetchOnWindowFocus: false,
+    refetchWhenOffline: false,
+  });
   const [volume, setVolume] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const soundRef = useRef<Howl | null>(null);

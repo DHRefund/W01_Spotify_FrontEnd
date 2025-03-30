@@ -1,14 +1,13 @@
 "use client";
 
-import { useSession } from "next-auth/react";
 import SongCard from "@/components/song-card";
 import PlaylistCard from "@/components/playlist-card";
 import ArtistCard from "@/components/artist-card";
 import { useRecentSongs, useRecommendedPlaylists, useTopArtists } from "@/hooks/useApi";
+import { useEffect } from "react";
+import { prefetchSession } from "@/lib/axios";
 
 export default function Home() {
-  const { data: session } = useSession();
-
   // Sử dụng React Query hooks
   const { data: recentSongs, isLoading: loadingRecentSongs } = useRecentSongs();
   const { data: recommendedPlaylists, isLoading: loadingPlaylists } = useRecommendedPlaylists();

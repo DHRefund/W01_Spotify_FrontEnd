@@ -17,6 +17,7 @@ import useAddSongModal from "@/hooks/useAddSongToPlaylistModal";
 import LoadingSpinner from "@/components/loading-spinner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/axios";
+import { useDeletePlaylist } from "@/app/(main)/playlist/[id]/apiQuery";
 
 export default function PlaylistPage({ params }: { params: { id: string } }) {
   const router = useRouter();
@@ -41,17 +42,7 @@ export default function PlaylistPage({ params }: { params: { id: string } }) {
   const isOwner = playlist && session?.user?.id === playlist.user.id;
 
   // Mutation để xóa playlist
-  const deletePlaylistMutation = useMutation({
-    mutationFn: () => api.delete(`/playlists/${params.id}`),
-    onSuccess: () => {
-      toast.success("Đã xóa playlist");
-      router.push("/");
-    },
-    onError: () => {
-      toast.error("Không thể xóa playlist");
-    },
-  });
-
+  const deletePlaylistMutation = useDeletePlaylist(params.id);
   // Mutation để xóa bài hát khỏi playlist
   const removeSongMutation = useMutation({
     mutationFn: (songId: string) => api.delete(`/playlists/${params.id}/songs/${songId}`),
@@ -83,9 +74,6 @@ export default function PlaylistPage({ params }: { params: { id: string } }) {
   };
 
   const handleDelete = async () => {
-    if (!confirm("Bạn có chắc chắn muốn xóa playlist này?")) {
-      return;
-    }
     deletePlaylistMutation.mutate();
   };
 
@@ -133,10 +121,10 @@ export default function PlaylistPage({ params }: { params: { id: string } }) {
               <p className="hidden md:block font-semibold text-sm">Playlist</p>
               {isOwner && (
                 <div className="flex gap-x-2">
-                  <button onClick={handleEdit} className="text-white hover:text-green-500 transition">
+                  <button onClick={handleEdit} className="cursor-pointer text-white hover:text-green-500 transition">
                     <FaEdit size={16} />
                   </button>
-                  <button onClick={handleDelete} className="text-white hover:text-red-500 transition">
+                  <button onClick={handleDelete} className="cursor-pointer text-white hover:text-red-500 transition">
                     <FaTrash size={16} />
                   </button>
                 </div>

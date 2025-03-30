@@ -1,20 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { FieldValues, SubmitHandler, useForm } from "react-hook-form";
+import { useCreatePlaylist } from "@/hooks/useApi";
 
 import Modal from "@/components/modals/modal";
 import Input from "@/components/ui/input";
 import Button from "@/components/ui/button";
-import api from "@/lib/axios";
+
 import useCreatePlaylistModal from "@/hooks/useCreatePlaylistModal";
 
 const CreatePlaylistModal = () => {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const createPlaylistModal = useCreatePlaylistModal();
+  const createPlaylistMutation = useCreatePlaylist(); // Di chuyển hook lên top-level
 
   const { register, handleSubmit, reset } = useForm<FieldValues>({
     defaultValues: {
@@ -32,29 +34,13 @@ const CreatePlaylistModal = () => {
   };
 
   const onSubmit: SubmitHandler<FieldValues> = async (values) => {
-    try {
-      setIsLoading(true);
-
-      const formData = new FormData();
-
-      formData.append("title", values.title);
-      if (values.description) formData.append("description", values.description);
-      if (values.image?.[0]) formData.append("image", values.image[0]);
-
-      // Gửi request tạo playlist
-      const response = await api.post("/playlists", formData);
-
-      toast.success("Tạo playlist thành công!");
-      reset();
-      createPlaylistModal.onClose();
-      router.refresh();
-      router.push(`/playlist/${response.data.id}`);
-    } catch (error) {
-      console.error("Lỗi khi tạo playlist:", error);
-      toast.error("Có lỗi xảy ra khi tạo playlist");
-    } finally {
-      setIsLoading(false);
-    }
+    const formData = new FormData();
+    formData.append("title", values.title);
+    if (values.description) formData.append("description", values.description);
+    if (values.image?.[0]) formData.append("image", values.image[0]);
+    createPlaylistMutation.mutate(formData);
+    reset();
+    createPlaylistModal.onClose();
   };
 
   return (
@@ -76,9 +62,15 @@ const CreatePlaylistModal = () => {
           <div className="pb-1">Chọn ảnh (không bắt buộc)</div>
           <Input id="image" type="file" disabled={isLoading} accept="image/*" {...register("image")} />
         </div>
-        <Button disabled={isLoading} type="submit">
-          Tạo playlist
-        </Button>
+        {isLoading ? (
+          <Button disabled={isLoading} type="submit">
+            Đang tạo playlist...
+          </Button>
+        ) : (
+          <Button disabled={isLoading} type="submit">
+            Tạo playlist
+          </Button>
+        )}
       </form>
     </Modal>
   );

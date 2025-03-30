@@ -20,7 +20,7 @@ const LikeButton: React.FC<LikeButtonProps> = ({ songId }) => {
   const { data: likedSongs, isLoading } = useUserLikedSongs();
 
   // Sử dụng React Query mutation để thích/bỏ thích bài hát
-  const { mutate: likeMutate, isLoading: isLiking } = useLikeSong();
+  const { mutate: likeMutate, isPending: isLiking } = useLikeSong();
 
   useEffect(() => {
     if (!likedSongs) return;
